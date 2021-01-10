@@ -68,7 +68,11 @@ class TestDecorations:
 
         decorations = Decoration.avaliable_decorations()
         for decoration in decorations:
-            self.__test_decoration(decoration)
+            is_decoration, is_mask = self.__test_decoration(decoration)
+
+            if not is_decoration and not is_mask:
+                raise FileNotFoundError(
+                    f"No files found for decoration '{decoration}'")
 
     def test_decoratin_generation(self,):
         """ Tries to generate every decoration image that is possible. """
