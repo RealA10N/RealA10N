@@ -8,6 +8,19 @@ from image import Decoration
 
 class TestDecorations:
 
+    __TEST_ASSETS_FOLDER = 'assets'
+    __TEST_PROFILE_IMAGE_NAME = 'test_profile.jpg'
+
+    @classmethod
+    def __get_test_image(cls,):
+        """ Returns an `Image.Image` instance that will be used for testing. """
+
+        cur_dir = os.path.dirname(os.path.abspath(__file__))
+        assets_dir = os.path.join(cur_dir, cls.__TEST_ASSETS_FOLDER)
+        image_path = os.path.join(assets_dir, cls.__TEST_PROFILE_IMAGE_NAME)
+
+        return Image.open(image_path)
+
     def __test_decoration(self, name: str):
         """ Recives a decoration name, and test that it exists and that
         everything is fine! """
@@ -50,9 +63,22 @@ class TestDecorations:
 
         assert is_mask, "Default decoration must contain a default mask"
 
-    def test_decorations(self,):
+    def test_decoration_assets(self,):
         """ Tests all of the avaliable decorations. """
 
         decorations = Decoration.avaliable_decorations()
         for decoration in decorations:
             self.__test_decoration(decoration)
+
+    def test_decoratin_generation(self,):
+        """ Tries to generate every decoration image that is possible. """
+
+        decorations = Decoration.avaliable_decorations()
+        profile = self.__get_test_image()
+
+        for decoration_name in decorations:
+            decoration = Decoration(decoration_name)
+            assert isinstance(
+                decoration.generate_image(profile),
+                Image.Image
+            ), "Didn't return an image instance."
