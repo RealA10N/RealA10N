@@ -1,6 +1,7 @@
 import typing
 import os
 
+import requests
 from PIL import Image, ImageDraw
 
 
@@ -42,6 +43,14 @@ class Decoration:
                 os.path.join(cls.DECORATIONS_FOLDER, name)
             )
         }
+
+    def __github_profile(self, username: str) -> Image.Image:
+        """ Recives the GitHub username, and returns the profile picture of
+        the user, as a pillow `Image.Image` instance. """
+
+        url = f'https://github.com/{username}.png'
+        img_bytes = requests.get(url, stream=True).raw
+        return Image.open(img_bytes)
 
     def __cut_mask(self, img: Image.Image):
         """ Recives a profile image. Loads the decoration mask (the default
@@ -93,7 +102,7 @@ class Decoration:
         bg.alpha_composite(decoration)
         return bg
 
-    def generate_image(self, profile: Image.Image):
+    def generate_image(self, profile: Image.Image) -> Image.Image:
         """ Recives a profile picture, and pastes the current decoration
         on top of it. Returns the new decorated image. """
 
@@ -102,3 +111,11 @@ class Decoration:
 
         image = self.__cut_mask(profile)
         return self.__paste_decoration(image)
+
+    def generate_github_image(self, username: str) -> Image.Image:
+        """ Recives a GitHub username, and pasted the current decoration
+        on top of hist profile picture. Returns the decorated image. """
+
+        profile = self.__github_profile(username)
+        return self.generate_image(profile)
+
