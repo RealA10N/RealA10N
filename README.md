@@ -3,6 +3,6 @@
         <img src='qr-code.png'>
     </a>
     <a href='https://github.com/RealA10N'>
-		<img scr='https://profile-counter.glitch.me/RealA10N/count.svg'>
-	</a>
+        <img src='https://profile-counter.glitch.me/RealA10N/count.svg'>
+    </a>
 </div>
