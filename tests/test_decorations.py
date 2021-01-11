@@ -1,8 +1,5 @@
 import os
-import pytest
-
 from PIL import Image
-
 from image import Decoration
 
 
@@ -10,6 +7,8 @@ class TestDecorations:
 
     __TEST_ASSETS_FOLDER = 'assets'
     __TEST_PROFILE_IMAGE_NAME = 'test_profile.jpg'
+
+    __TEST_GITHUB_USERNAMES = {'reala10n', 'mark', 'rober'}
 
     @classmethod
     def __get_test_image(cls,):
@@ -86,3 +85,18 @@ class TestDecorations:
                 decoration.generate_image(profile),
                 Image.Image
             ), "Didn't return an image instance."
+
+    def test_github_decoration_generation(self,):
+        """ Tries to generate every decoration image with the test github
+        users. """
+
+        decorations = Decoration.avaliable_decorations()
+
+        for user in self.__TEST_GITHUB_USERNAMES:
+            for decoration_name in decorations:
+
+                decoration = Decoration(decoration_name)
+                assert isinstance(
+                    decoration.generate_github_image(user),
+                    Image.Image,
+                ), "Didn't return an image instance."
