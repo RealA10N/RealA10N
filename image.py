@@ -1,10 +1,13 @@
 import typing
 import os
 import random
+import json
 
 import requests
 import click
 from PIL import Image, ImageDraw
+
+from select_table import DecorationType
 
 
 class Decoration:
@@ -12,8 +15,10 @@ class Decoration:
     DECORATIONS_FOLDER = 'decorations'
     DECORATION_IMAGE_NAME = 'decoration.png'
     DECORATION_MASK_NAME = 'mask.png'
+    DECORATION_CONFIG_FILENAME = 'config.json'
 
     DEFAULT_DECORATION_NAME = 'default'
+    DEFAULT_DECORATION_TYPE = 'default'
 
     PROFILE_PICTURE_SIZE = (256, 256)  # pixels
 
@@ -26,6 +31,18 @@ class Decoration:
             raise ValueError("Invalid decoration name")
 
         self.__name = name
+        self.__config = self.__load_config_data()
+
+    def __load_config_data(self,) -> dict:
+        """ Loads the decoration configuration file, and saves the data in
+        memory. """
+
+        # Load the decoraion type
+        config_path = os.path.join(
+            self._this_folder(), self.DECORATION_CONFIG_FILENAME)
+
+        with open(config_path, 'r') as file:
+            return json.load(file)
 
     def _this_folder(self,):
         """ Returns the path to the current decoration folder. """
@@ -48,6 +65,10 @@ class Decoration:
                 os.path.join(cls.DECORATIONS_FOLDER, name)
             )
         }
+
+    def decoration_type(self,) -> str:
+        """ Returns the decoration type, as a `DecorationType` instance. """
+        return DecorationType(self.__config['type'])
 
     def __github_profile(self, username: str) -> Image.Image:
         """ Recives the GitHub username, and returns the profile picture of
