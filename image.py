@@ -3,6 +3,7 @@ import os
 import random
 
 import requests
+import click
 from PIL import Image, ImageDraw
 
 
@@ -57,6 +58,8 @@ class Decoration:
         response = requests.get(url, stream=True)
         if response.status_code != 200:
             raise ValueError("Invalid GitHub username")
+
+        click.echo(f'Downloaded image of user {username} from GitHub')
 
         return Image.open(response.raw)
 
@@ -118,7 +121,11 @@ class Decoration:
         profile = profile.resize(self.PROFILE_PICTURE_SIZE)
 
         image = self.__cut_mask(profile)
-        return self.__paste_decoration(image)
+        decoration = self.__paste_decoration(image)
+
+        click.echo('Generated decoration image')
+
+        return decoration
 
     def generate_github_image(self, username: str) -> Image.Image:
         """ Recives a GitHub username, and pasted the current decoration
@@ -167,7 +174,39 @@ class Canvas:
             mask=img.getchannel('A'),
         )
 
+        click.echo(f'Added image to canvas at position {pasting}')
+
     def save(self,):
         """ Saves the new generated canvas. """
         self.__canvas.save(self.CANVAS_PATH)
 
+
+@click.command()
+@click.argument('gh-username')
+@click.option('-d', '--decoration')
+def main(gh_username: str, decoration: str = None):
+
+    try:
+        decoration = Decoration(decoration)
+
+    except ValueError as e:
+        # If invalid decoration
+        click.echo(e)
+        exit(10)
+
+    canvas = Canvas()
+
+    try:
+        img = decoration.generate_github_image(gh_username)
+
+    except ValueError as e:
+        # If invalid GitHub username (picture not found)
+        click.echo(e)
+        exit(20)
+
+    canvas.add_image(img)
+    canvas.save()
+
+
+if __name__ == "__main__":
+    main()
