@@ -2,6 +2,8 @@ import os
 import json
 import typing
 
+import image
+
 
 class DecorationType:
 
@@ -69,11 +71,118 @@ class DecorationType:
         color = self.__cur_data['label']['color']
         return f'https://img.shields.io/badge/-{text}-{color}'
 
-    def label_html(self,) -> typing.Optional[str]:
-        """ Returns a string that represents an html `image` tag. This
-        tag, when placed in an html or markdown file, shows the label! """
 
-        if not self.is_label():
-            return None
+class DecorationTableCell(image.Decoration):
 
-        return f'<img src="{self.label_url()}"/>'
+    DECORATION_EXAMPLE_NAME = 'example.png'
+
+    TEMPLATES_FOLDER = 'templates'
+    CELL_TEMPLATE = 'select_decoration_template.html'
+
+    ISSUE_TITLE_TEMPLATE = 'visitREADME|%DECORATIONNAME%'
+    ISSUE_BODY_TEMPLATE = [
+        'Just click the `Submit new issue` button!',
+        'Your profile picture should appear on my README page in about a minute.',
+        '(%3B',  # -> (;
+    ]
+
+    __cell_template = None
+
+    def __relative_path_to_example(self,):
+        """ Returns the relative path to the current decoration example
+        image. """
+
+        return os.path.join(
+            self._this_folder(),
+            self.DECORATION_EXAMPLE_NAME,
+        )
+
+    @ classmethod
+    def __load_cell_template(cls,):
+        """ Loads the cell template file, and saves its content in the
+        memory. """
+
+        path = os.path.join(cls.TEMPLATES_FOLDER, cls.CELL_TEMPLATE)
+
+        with open(path, 'r') as file:
+            return file.read().splitlines()
+
+    def __remove_from_html_template(self,
+                                    template: typing.List[str],
+                                    query: str):
+        """ Recives an html element template (list of strings,
+        each string is a line) and a query. See implementation for more
+        information. """
+
+        start_query = f'<!-- IF {query} -->'
+        end_query = f'<!-- FI {query} -->'
+
+        deleting = False
+        new_template = list()
+
+        for index, line in enumerate(template):
+
+            if start_query in line:
+                deleting = not deleting
+
+            if not deleting:
+                new_template.append(line)
+
+            if end_query in line:
+                deleting = not deleting
+
+        return new_template
+
+    def __issue_redirect_url(self,) -> str:
+        """ Returns the url that the user will be redirected to when he clicks
+        on the decoration. It's a url to create a new issue, with the name
+        of the decoration in the title. """
+
+        title = self.ISSUE_TITLE_TEMPLATE.replace(
+            '%DECORATIONNAME%', self._name)
+
+        # Converting list to one string
+        # the `%0D` char is somewhat like `\n`, and converts the list
+        # to a single string.
+        body = '%0D'.join(self.ISSUE_BODY_TEMPLATE)
+
+        return f'https://github.com/RealA10N/RealA10N/issues/new?title={title}&body={body}'
+
+    def decoration_type(self,):
+        """ Returns an `DecorationType` instance, that represents the type
+        of the current decoration instance. """
+
+        dec_type = self._config['type']
+        return DecorationType(dec_type)
+
+    def to_html(self,) -> str:
+
+        # Loads the cell template if not loaded yet (static property)
+        if self.__cell_template is None:
+            self.__cell_template = self.__load_cell_template()
+        template = self.__cell_template
+
+        # If current decoration type doesn't have a label
+        # removes the label part from the template
+        dec_type = self.decoration_type()
+        is_label = dec_type.is_label()
+        if not is_label:
+            template = self.__remove_from_html_template(template, 'label')
+
+        result = list()
+
+        # Replace values in the template
+        for line in template:
+
+            line = line.replace('{{REDIRECT_URL}}',
+                                self.__issue_redirect_url())
+
+            line = line.replace(
+                '{{IMAGE_PATH}}', self.__relative_path_to_example())
+
+            if is_label:
+                line = line.replace('{{LABEL_URL}}', dec_type.label_url())
+
+            result.append(line)
+
+        return result

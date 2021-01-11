@@ -7,8 +7,6 @@ import requests
 import click
 from PIL import Image, ImageDraw
 
-from select_table import DecorationType
-
 
 class Decoration:
 
@@ -30,8 +28,8 @@ class Decoration:
         if name not in self.avaliable_decorations():
             raise ValueError("Invalid decoration name")
 
-        self.__name = name
-        self.__config = self.__load_config_data()
+        self._name = name
+        self._config = self.__load_config_data()
 
     def __load_config_data(self,) -> dict:
         """ Loads the decoration configuration file, and saves the data in
@@ -46,7 +44,7 @@ class Decoration:
 
     def _this_folder(self,):
         """ Returns the path to the current decoration folder. """
-        return os.path.join(self.DECORATIONS_FOLDER, self.__name)
+        return os.path.join(self.DECORATIONS_FOLDER, self._name)
 
     @classmethod
     def _default_folder(cls,):
@@ -65,10 +63,6 @@ class Decoration:
                 os.path.join(cls.DECORATIONS_FOLDER, name)
             )
         }
-
-    def decoration_type(self,) -> str:
-        """ Returns the decoration type, as a `DecorationType` instance. """
-        return DecorationType(self.__config['type'])
 
     def __github_profile(self, username: str) -> Image.Image:
         """ Recives the GitHub username, and returns the profile picture of
