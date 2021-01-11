@@ -154,11 +154,15 @@ class Canvas:
     def __generate_default_canvas(self,):
         """ Generates and returns the default empty canvas. """
 
-        return Image.new(
+        img = Image.new(
             'RGBA',
             size=self.SIZE,
             color=(0, 0, 0, 0),
         )
+
+        click.echo('Generated new canvas')
+
+        return img
 
     def add_image(self, img: Image.Image):
         """ Pastes the given image onto the canvas (without resizing). """
@@ -178,7 +182,9 @@ class Canvas:
 
     def save(self,):
         """ Saves the new generated canvas. """
+
         self.__canvas.save(self.CANVAS_PATH)
+        click.echo(f'Saved {self.CANVAS_PATH}')
 
 
 @click.command()
