@@ -15,10 +15,13 @@ class Decoration:
 
     PROFILE_PICTURE_SIZE = (256, 256)  # pixels
 
-    def __init__(self, name: str):
+    def __init__(self, name: str = None):
+
+        if name is None:
+            name = self.DEFAULT_DECORATION_NAME
 
         if name not in self.avaliable_decorations():
-            raise ValueError("Not a valid decoration name")
+            raise ValueError("Invalid decoration name")
 
         self.__name = name
 
@@ -49,8 +52,12 @@ class Decoration:
         the user, as a pillow `Image.Image` instance. """
 
         url = f'https://github.com/{username}.png'
-        img_bytes = requests.get(url, stream=True).raw
-        return Image.open(img_bytes)
+
+        response = requests.get(url, stream=True)
+        if response.status_code != 200:
+            raise ValueError("Invalid GitHub username")
+
+        return Image.open(response.raw)
 
     def __cut_mask(self, img: Image.Image):
         """ Recives a profile image. Loads the decoration mask (the default
