@@ -1,0 +1,12 @@
+[
+    {
+        "type": "default"
+    },
+    {
+        "type": "following",
+        "label": {
+            "text": "followers only",
+            "color": "orange"
+        }
+    }
+]
