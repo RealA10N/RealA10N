@@ -1,5 +1,6 @@
 import typing
 import os
+import random
 
 import requests
 from PIL import Image, ImageDraw
@@ -125,4 +126,48 @@ class Decoration:
 
         profile = self.__github_profile(username)
         return self.generate_image(profile)
+
+
+class Canvas:
+
+    SIZE = (1920, 1440)  # 4:3 ratio
+    CANVAS_PATH = 'canvas.png'
+
+    def __init__(self):
+
+        if os.path.isfile(self.CANVAS_PATH):
+            canvas = Image.open(self.CANVAS_PATH,)
+            self.SIZE = canvas.size
+
+        else:
+            canvas = self.__generate_default_canvas()
+
+        self.__canvas = canvas
+
+    def __generate_default_canvas(self,):
+        """ Generates and returns the default empty canvas. """
+
+        return Image.new(
+            'RGBA',
+            size=self.SIZE,
+            color=(0, 0, 0, 0),
+        )
+
+    def add_image(self, img: Image.Image):
+        """ Pastes the given image onto the canvas (without resizing). """
+
+        # Generating the pasting location
+        max_x = self.SIZE[0] - img.width
+        max_y = self.SIZE[1] - img.height
+        pasting = random.randint(0, max_x), random.randint(0, max_y)
+
+        self.__canvas.paste(
+            img.convert('RGB'),
+            box=pasting,
+            mask=img.getchannel('A'),
+        )
+
+    def save(self,):
+        """ Saves the new generated canvas. """
+        self.__canvas.save(self.CANVAS_PATH)
 
