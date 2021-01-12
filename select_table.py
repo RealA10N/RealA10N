@@ -1,7 +1,9 @@
 import os
 import json
 import typing
+import click
 
+from abc import ABC, abstractmethod
 import image
 
 
@@ -27,6 +29,11 @@ class DecorationType:
             if cur_data['type'] == name
         )
 
+    @property
+    def name(self,):
+        """ The name of the decoration type. """
+        return self.__name
+
     @classmethod
     def __load_data(cls,):
         """ Loads the decoration general configuration file, and returns
@@ -41,17 +48,17 @@ class DecorationType:
             return json.load(file)
 
     @classmethod
-    def avaliable_types(cls,) -> typing.Set[str]:
+    def avaliable_types(cls,) -> typing.List[str]:
         """ Returns a set of strings. Each string is a valid decoration
         type. """
 
         if cls._data is None:
             cls._data = cls.__load_data()
 
-        return {
+        return [
             type_data['type']
             for type_data in cls._data
-        }
+        ]
 
     def is_label(self,) -> bool:
         """ Returns `True` if the current decoration type has a special label.
@@ -72,7 +79,18 @@ class DecorationType:
         return f'https://img.shields.io/badge/-{text}-{color}'
 
 
-class DecorationTableCell(image.Decoration):
+class DecorationTableElement(ABC):
+
+    @staticmethod
+    def _shift_right(line: str, amount: int = 4):
+        return (' ' * 4) + line
+
+    @abstractmethod
+    def to_html(self):
+        pass
+
+
+class DecorationTableCell(image.Decoration, DecorationTableElement):
 
     DECORATION_EXAMPLE_NAME = 'example.png'
 
@@ -95,9 +113,9 @@ class DecorationTableCell(image.Decoration):
         return os.path.join(
             self._this_folder(),
             self.DECORATION_EXAMPLE_NAME,
-        )
+        ).replace('\\', '/')
 
-    @ classmethod
+    @classmethod
     def __load_cell_template(cls,):
         """ Loads the cell template file, and saves its content in the
         memory. """
@@ -107,8 +125,8 @@ class DecorationTableCell(image.Decoration):
         with open(path, 'r') as file:
             return file.read().splitlines()
 
-    def __remove_from_html_template(self,
-                                    template: typing.List[str],
+    @staticmethod
+    def __remove_from_html_template(template: typing.List[str],
                                     query: str):
         """ Recives an html element template (list of strings,
         each string is a line) and a query. See implementation for more
@@ -139,7 +157,7 @@ class DecorationTableCell(image.Decoration):
         of the decoration in the title. """
 
         title = self.ISSUE_TITLE_TEMPLATE.replace(
-            '%DECORATIONNAME%', self._name)
+            '%DECORATIONNAME%', self.name)
 
         # Converting list to one string
         # the `%0D` char is somewhat like `\n`, and converts the list
@@ -155,7 +173,8 @@ class DecorationTableCell(image.Decoration):
         dec_type = self._config['type']
         return DecorationType(dec_type)
 
-    def to_html(self,) -> str:
+    def to_html(self,) -> typing.List[str]:
+        """ Returns the cell representation in html, as a list of strings. """
 
         # Loads the cell template if not loaded yet (static property)
         if self.__cell_template is None:
@@ -180,9 +199,130 @@ class DecorationTableCell(image.Decoration):
             line = line.replace(
                 '{{IMAGE_PATH}}', self.__relative_path_to_example())
 
+            line = line.replace('{{NAME}}', self.name.capitalize())
+
             if is_label:
                 line = line.replace('{{LABEL_URL}}', dec_type.label_url())
 
             result.append(line)
 
         return result
+
+
+class DecorationTableRow(DecorationTableElement):
+
+    def __init__(self, cells: typing.List[DecorationTableCell] = []):
+        self.__cells = list()
+
+        for cell in cells:
+            self.add_cell(cell)
+
+    def add_cell(self, cell: DecorationTableCell) -> None:
+        """ Adds a single cell to the row. """
+
+        if not isinstance(cell, DecorationTableCell):
+            raise TypeError("Incompatible cell type")
+
+        self.__cells.append(cell)
+
+    def to_html(self,) -> typing.List[str]:
+        """ Returns the representation of the table row in html, as a 
+        list of strings. """
+
+        # sort the cell list
+        cells = list(self.__cells)
+        cells.sort(key=lambda cell: cell.name)
+
+        # For each cell in the row, generate the html and add to `lines`
+        lines = list()
+        for cell in cells:
+            lines += cell.to_html()
+
+        # Add the <tr> tags, shift lines to the right and return result!
+        return ['<tr>'] + [self._shift_right(line) for line in lines] + ['</tr>']
+
+
+class DecorationTable(DecorationTableElement):
+
+    MAX_CELLS_IN_ROW = 4
+
+    def __init__(self, cells: typing.List[DecorationTableCell] = []):
+        self.__types = dict()
+
+        for cell in cells:
+            self.add_cell(cell)
+
+    def add_cell(self, cell: DecorationTableCell):
+        """ Adds a single cell to the table. It will be sorted and places
+        in the currect row automatically. """
+
+        cell_type = cell.decoration_type().name
+
+        if cell_type in self.__types:
+            # If the cell type is already known (and has a row dedicated to it)
+            self.__types[cell_type].append(cell)
+
+        else:
+            # If not, creates a new row and saves it!
+            self.__types[cell_type] = [cell]
+
+    def __generate_table_rows(self) -> typing.List[DecorationTableRow]:
+        """ Generates and returns instances of `DecorationTableRow`. Each
+        row contains a maximum of `MAX_CELLS_IN_ROW` items in it, and the
+        items ordered by their types. """
+
+        # Loads the cells to one list, but saves the order of
+        # the types inside the general config file.
+        cells = list()
+        for cur_type in DecorationType.avaliable_types():
+            if cur_type in self.__types:
+                cells += self.__types[cur_type]
+
+        # Converts the one long list of cells into a list of lists.
+        # 'Slice' the cells into rows.
+
+        row_cells = list()
+        for index, cell in enumerate(cells):
+
+            row = int(index / self.MAX_CELLS_IN_ROW)
+            in_row = index % self.MAX_CELLS_IN_ROW
+
+            if in_row == 0:
+                # If it is a start of a new row: creates a new row.
+                row_cells.append(list())
+
+            # Adds the current cell to its row.
+            row_cells[row].append(cell)
+
+        # Converts the list of list of cells into a list of rows, and returns.
+        return [DecorationTableRow(cur_row_cells) for cur_row_cells in row_cells]
+
+    def to_html(self) -> typing.List[str]:
+        """ Generates and returns the representation of the table in html,
+        as a list of strings. """
+
+        lines = list()
+        for row in self.__generate_table_rows():
+            lines += row.to_html()
+
+        return ['<table>'] + [self._shift_right(line) for line in lines] + ['</table>']
+
+
+@click.command()
+@click.argument('output-path', default='select_table.html')
+def main(output_path):
+
+    # Generating the 'select decoration' table
+    table = DecorationTable()
+    for dec_name in DecorationTableCell.avaliable_decorations():
+        cell = DecorationTableCell(dec_name)
+        table.add_cell(cell)
+
+    # Saving the generated table into the given filepath
+    to_write = '\n'.join(table.to_html())
+    with open(output_path, 'w') as file:
+        file.write(to_write)
+
+
+if __name__ == "__main__":
+    main()
