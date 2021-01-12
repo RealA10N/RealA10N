@@ -28,7 +28,7 @@ class Decoration:
         if name not in self.avaliable_decorations():
             raise ValueError("Invalid decoration name")
 
-        self._name = name
+        self.__name = name
         self._config = self.__load_config_data()
 
     def __load_config_data(self,) -> dict:
@@ -44,7 +44,12 @@ class Decoration:
 
     def _this_folder(self,):
         """ Returns the path to the current decoration folder. """
-        return os.path.join(self.DECORATIONS_FOLDER, self._name)
+        return os.path.join(self.DECORATIONS_FOLDER, self.name)
+
+    @property
+    def name(self):
+        """ The name of the decoration. """
+        return self.__name
 
     @classmethod
     def _default_folder(cls,):
