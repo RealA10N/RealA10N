@@ -62,6 +62,22 @@ class TestDecorations:
 
         assert is_mask, "Default decoration must contain a default mask"
 
+    def test_decoration_names(self,):
+        """ Tests if one or more of the decoration names are included in
+        the other names. """
+
+        decorations = Decoration.avaliable_decorations()
+        for cur_name in decorations:
+            for matching_name in decorations:
+                # For each two pairs of decoration names.
+
+                if cur_name != matching_name:
+                    # If its not the same name
+                    # checks if one inside of another
+
+                    err_msg = f"Can't use decoration names '{cur_name}' and '{matching_name}' together"
+                    assert cur_name not in matching_name, err_msg
+
     def test_decoration_assets(self,):
         """ Tests all of the avaliable decorations. """
 
