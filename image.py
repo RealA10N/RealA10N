@@ -184,6 +184,10 @@ class Canvas:
 
         return img
 
+    def clear(self,):
+        """ Resets the canvas and deletes the already generated footprints. """
+        self.__canvas = self.__generate_default_canvas()
+
     def add_image(self, img: Image.Image):
         """ Pastes the given image onto the canvas (without resizing). """
 
@@ -210,7 +214,14 @@ class Canvas:
 @click.command()
 @click.argument('gh-username')
 @click.option('-d', '--decoration')
-def main(gh_username: str, decoration: str = None):
+@click.option('-c', '--clear', is_flag=True)
+def main(gh_username: str, clear: bool, decoration: str = None,):
+
+    canvas = Canvas()
+
+    if clear:
+        # Reset canvas if requested
+        canvas.clear()
 
     try:
         decoration = Decoration(decoration)
@@ -219,8 +230,6 @@ def main(gh_username: str, decoration: str = None):
         # If invalid decoration
         click.echo(e)
         exit(10)
-
-    canvas = Canvas()
 
     try:
         img = decoration.generate_github_image(gh_username)
