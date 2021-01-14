@@ -1,82 +1,11 @@
 import os
-import json
 import typing
 import click
 
 from abc import ABC, abstractmethod
+
 import image
-
-
-class DecorationType:
-
-    GENERAL_CONFIG_FOLDER = 'decorations'
-    GENERAL_CONFIG_FILENAME = 'types.json'
-
-    _data = None
-
-    def __init__(self, name: str):
-
-        if name not in self.avaliable_types():
-            raise ValueError("Invalid decoration type")
-
-        if self._data is None:
-            self._data = self.__load_data()
-
-        self.__name = name
-        self.__cur_data = next(
-            cur_data
-            for cur_data in self._data
-            if cur_data['type'] == name
-        )
-
-    @property
-    def name(self,):
-        """ The name of the decoration type. """
-        return self.__name
-
-    @classmethod
-    def __load_data(cls,):
-        """ Loads the decoration general configuration file, and returns
-        the raw data. """
-
-        path = os.path.join(
-            cls.GENERAL_CONFIG_FOLDER,
-            cls.GENERAL_CONFIG_FILENAME,
-        )
-
-        with open(path, 'r') as file:
-            return json.load(file)
-
-    @classmethod
-    def avaliable_types(cls,) -> typing.List[str]:
-        """ Returns a set of strings. Each string is a valid decoration
-        type. """
-
-        if cls._data is None:
-            cls._data = cls.__load_data()
-
-        return [
-            type_data['type']
-            for type_data in cls._data
-        ]
-
-    def is_label(self,) -> bool:
-        """ Returns `True` if the current decoration type has a special label.
-        For example, the 'following' decoration type has a special label,
-        that is displayed in the README.md file (: """
-
-        return 'label' in self.__cur_data
-
-    def label_url(self,) -> typing.Optional[str]:
-        """ Returns the url that contains the label image. `None` if there
-        is no label to the current decoration type. """
-
-        if not self.is_label():
-            return None
-
-        text = self.__cur_data['label']['text']
-        color = self.__cur_data['label']['color']
-        return f'https://img.shields.io/badge/-{text}-{color}'
+import decoration_types
 
 
 class DecorationTableElement(ABC):
@@ -166,13 +95,6 @@ class DecorationTableCell(image.Decoration, DecorationTableElement):
 
         return f'https://github.com/RealA10N/RealA10N/issues/new?title={title}&body={body}'
 
-    def decoration_type(self,):
-        """ Returns an `DecorationType` instance, that represents the type
-        of the current decoration instance. """
-
-        dec_type = self._config['type']
-        return DecorationType(dec_type)
-
     def to_html(self,) -> typing.List[str]:
         """ Returns the cell representation in html, as a list of strings. """
 
@@ -183,8 +105,7 @@ class DecorationTableCell(image.Decoration, DecorationTableElement):
 
         # If current decoration type doesn't have a label
         # removes the label part from the template
-        dec_type = self.decoration_type()
-        is_label = dec_type.is_label()
+        is_label = self.type_cls.is_label()
         if not is_label:
             template = self.__remove_from_html_template(template, 'label')
 
@@ -202,7 +123,7 @@ class DecorationTableCell(image.Decoration, DecorationTableElement):
             line = line.replace('{{NAME}}', self.name.capitalize())
 
             if is_label:
-                line = line.replace('{{LABEL_URL}}', dec_type.label_url())
+                line = line.replace('{{LABEL_URL}}', self.type_cls.label_url())
 
             result.append(line)
 
@@ -256,7 +177,7 @@ class DecorationTable(DecorationTableElement):
         """ Adds a single cell to the table. It will be sorted and places
         in the currect row automatically. """
 
-        cell_type = cell.decoration_type().name
+        cell_type = cell.type
 
         if cell_type in self.__types:
             # If the cell type is already known (and has a row dedicated to it)
@@ -274,7 +195,7 @@ class DecorationTable(DecorationTableElement):
         # Loads the cells to one list, but saves the order of
         # the types inside the general config file.
         cells = list()
-        for cur_type in DecorationType.avaliable_types():
+        for cur_type in decoration_types.TYPES_TABLE:
             if cur_type in self.__types:
                 cells += self.__types[cur_type]
 
@@ -325,4 +246,4 @@ def main(output_path):
 
 
 if __name__ == "__main__":
-    main()
+    main()  # pylint: disable=no-value-for-parameter

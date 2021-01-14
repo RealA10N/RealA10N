@@ -7,6 +7,8 @@ import requests
 import click
 from PIL import Image, ImageDraw
 
+import decoration_types
+
 
 class Decoration:
 
@@ -31,6 +33,9 @@ class Decoration:
         self.__name = name
         self._config = self.__load_config_data()
 
+        # try running -> should raise an error if somethings wrong
+        self.type_cls  # pylint: disable=pointless-statement
+
     def __load_config_data(self,) -> dict:
         """ Loads the decoration configuration file, and saves the data in
         memory. """
@@ -47,9 +52,26 @@ class Decoration:
         return os.path.join(self.DECORATIONS_FOLDER, self.name)
 
     @property
-    def name(self):
+    def name(self) -> str:
         """ The name of the decoration. """
         return self.__name
+
+    @property
+    def type(self,) -> str:
+        """ The type of the decoration, as a string. """
+        return self._config['type']
+
+    @property
+    def type_cls(self,) -> decoration_types.DecorationType:
+        """ Returns a pointer to an object (class, not instance of class)
+        that represents the type of the current decoration. """
+
+        if self.type not in decoration_types.TYPES_TABLE:
+            raise ValueError(
+                f"Decoration type '{self.type}' is not currect. Double check the config file!"
+            )
+
+        return decoration_types.TYPES_TABLE[self.type]
 
     @classmethod
     def _default_folder(cls,):
@@ -244,4 +266,4 @@ def main(gh_username: str, clear: bool, decoration: str = None,):
 
 
 if __name__ == "__main__":
-    main()
+    main()  # pylint: disable=no-value-for-parameter
