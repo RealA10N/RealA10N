@@ -1,5 +1,5 @@
-import requests
 import typing
+import requests
 
 
 class AccessGitHub:
@@ -43,7 +43,7 @@ class AccessGitHubUser(AccessGitHub):
                 repo_data['owner']['login'].lower(),  # repo owner name
                 repo_data['name'].lower(),            # repo name
             )
-            for repo_data in self._access('/starred').json()
+            for repo_data in self._access('/starred', method='get').json()
         }
 
     def is_starred(self, owner: str, name: str) -> bool:
@@ -58,14 +58,14 @@ class AccessGitHubUser(AccessGitHub):
 
         return {
             user_data['login'].lower()
-            for user_data in self._access('/following').json()
+            for user_data in self._access('/following', method='get').json()
         }
 
     def is_following(self, name: str) -> bool:
         """ Returns `True` only if the current user follows the given user
         on GitHub. """
 
-        return name in self.following()
+        return name.lower() in self.following() or name.lower() == self.__name
 
 
 class AccessGitHubRepo(AccessGitHub):
