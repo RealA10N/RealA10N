@@ -12,7 +12,7 @@ class DecorationTableElement(ABC):
 
     @staticmethod
     def _shift_right(line: str, amount: int = 4):
-        return (' ' * 4) + line
+        return (' ' * amount) + line
 
     @abstractmethod
     def to_html(self):
@@ -67,7 +67,7 @@ class DecorationTableCell(image.Decoration, DecorationTableElement):
         deleting = False
         new_template = list()
 
-        for index, line in enumerate(template):
+        for line in template:
 
             if start_query in line:
                 deleting = not deleting
@@ -132,7 +132,11 @@ class DecorationTableCell(image.Decoration, DecorationTableElement):
 
 class DecorationTableRow(DecorationTableElement):
 
-    def __init__(self, cells: typing.List[DecorationTableCell] = []):
+    def __init__(self, cells: typing.List[DecorationTableCell] = None):
+
+        if cells is None:
+            cells = list()
+
         self.__cells = list()
 
         for cell in cells:
@@ -167,7 +171,11 @@ class DecorationTable(DecorationTableElement):
 
     MAX_CELLS_IN_ROW = 4
 
-    def __init__(self, cells: typing.List[DecorationTableCell] = []):
+    def __init__(self, cells: typing.List[DecorationTableCell] = None):
+
+        if cells is None:
+            cells = list()
+
         self.__types = dict()
 
         for cell in cells:
