@@ -1,6 +1,4 @@
-import typing
 import os
-import json
 
 import requests
 

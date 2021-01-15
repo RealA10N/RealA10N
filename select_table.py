@@ -1,25 +1,43 @@
+""" The objects in this file are used to automatically generate the
+`select_table.html` file, which is then added automatically to the README in
+each update. """
+
+
 import os
 import typing
-import click
-
 from abc import ABC, abstractmethod
+
+import click
 
 import image
 import decoration_types
+
+
+class DecorationIssueTemplate:
+
+    def issue_to_decoration(self,):
+        pass
+
+    def decoration_to_issue(self,):
+        pass
 
 
 class DecorationTableElement(ABC):
 
     @staticmethod
     def _shift_right(line: str, amount: int = 4):
+        """ Shifts the given line to the right, the given amount (adds white-
+        spaces). """
         return (' ' * amount) + line
 
     @abstractmethod
     def to_html(self):
-        pass
+        """ Returns the HTML representation of the object. Abstract method. """
 
 
 class DecorationTableCell(image.Decoration, DecorationTableElement):
+    """ Represents one cell in the decoration table -> represents exactly one
+    decoration. """
 
     DECORATION_EXAMPLE_NAME = 'example.png'
 
@@ -168,6 +186,9 @@ class DecorationTableRow(DecorationTableElement):
 
 
 class DecorationTable(DecorationTableElement):
+    """ Represents the decorations table (Duh!). Manages instances of
+    `DecorationTableCell` and `DecorationTableRow`, and combines them all
+    to a single html file using the `to_html` method. """
 
     MAX_CELLS_IN_ROW = 4
 
@@ -238,8 +259,10 @@ class DecorationTable(DecorationTableElement):
 
 
 @click.command()
-@click.argument('output-path', default='select_table.html')
+@click.argument('output-path', default='select_table.html',)
 def main(output_path):
+    """ Generates the decoration selecting table, and saves it in the given
+    output path. """
 
     # Generating the 'select decoration' table
     table = DecorationTable()
