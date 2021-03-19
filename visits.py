@@ -41,3 +41,28 @@ class VisitContainer:
 
         with open(self.__filepath, 'w') as file:
             json.dump(self.__data, file, indent=4)
+
+    def visited_before(self, username: str) -> int:
+        """ Returns how long ago (in seconds) the given username have visited.
+        Raises a KeyError if the given username never visited. """
+
+        last_visited = self.__data[username]['timestamp']
+        now = datetime.now().timestamp()
+        return int(now - last_visited)
+
+    def can_visit(self,
+                  username: str,
+                  min_seconds_passed: int,
+                  ) -> bool:
+        """ Checks whenever the given user can visit again right now. This
+        actually checks whenever the user has visited previously in the last
+        `min_seconds_passed` given seconds. """
+
+        try:
+            visited_before = self.visited_before(username)
+
+        except KeyError:
+            # If the username is visiting for the first time
+            return True
+
+        return visited_before >= min_seconds_passed
