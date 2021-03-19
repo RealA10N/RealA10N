@@ -66,3 +66,12 @@ class VisitContainer:
             return True
 
         return visited_before >= min_seconds_passed
+
+    def top_visitor(self,) -> str:
+        """ Returns the username that visited the most. """
+
+        return max(
+            self.__data.keys(),
+            key=lambda name: self.__data[name]['visits'],
+            default='None',  # default value if there is no visits
+        )
