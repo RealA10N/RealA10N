@@ -1,6 +1,4 @@
 import typing
-import os
-import json
 
 from abc import ABC, abstractclassmethod
 from gh_api import AccessGitHubUser
