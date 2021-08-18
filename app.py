@@ -1,5 +1,5 @@
 import io
-from flask import Flask, send_file
+from flask import Flask, send_file, make_response
 from art import GitHubBanner
 
 
@@ -15,7 +15,10 @@ def start():
         img.save(arr, format='png')
 
         arr.seek(0)
-        return send_file(arr, mimetype='image/png')
+
+        re = make_response(send_file(arr, mimetype='image/png'))
+        re.headers['Cache-Control'] = 'no-cache'
+        return re
 
     return app
 
