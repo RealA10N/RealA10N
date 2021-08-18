@@ -17,7 +17,12 @@ def start():
         arr.seek(0)
 
         re = make_response(send_file(arr, mimetype='image/png'))
-        re.headers['Cache-Control'] = 'no-cache'
+        re.headers['Cache-Control'] = ', '.join((
+            'max-age=0',
+            'no-cache',
+            'no-store',
+            'must-revalidate',
+        ))
         return re
 
     return app
