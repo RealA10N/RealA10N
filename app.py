@@ -29,5 +29,4 @@ def start():
 
 
 if __name__ == '__main__':
-    from waitress import serve
-    serve(start())
+    start().run()

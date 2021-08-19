@@ -9,7 +9,7 @@ REPO = THIS.parents[1]
 class GitHubBanner(DynamicBanner):
 
     base: Image.Image = Image.open(
-        REPO / 'assets' / 'images' / 'base-banner.png')
+        REPO / 'assets' / 'images' / '4x3.png')
 
     class fonts:
         path = str(REPO / 'assets' / 'fonts' / 'MADE TOMMY Black.otf')
@@ -31,7 +31,7 @@ class GitHubBanner(DynamicBanner):
         # Title
         # TODO: static info can be generated once and not every time.
         draw.multiline_text(
-            xy=(img.width // 2, 150),
+            xy=(img.width // 2, 100),
             text='\n'.join(('Welcome to my', 'GitHub profile!')),
             fill=self.colors.main,
             font=self.fonts.h1,
@@ -42,7 +42,7 @@ class GitHubBanner(DynamicBanner):
 
         # Visitor counter
         draw.text(
-            (img.width // 2, 280),
+            (img.width // 2, 230),
             text=f"{self.db.data['visitors']} people",
             fill=self.colors.bold,
             font=self.fonts.h2,
@@ -51,7 +51,7 @@ class GitHubBanner(DynamicBanner):
         )
 
         draw.multiline_text(
-            (img.width // 2, 310),
+            (img.width // 2, 260),
             text='\n'.join(('have visited this page', 'before you did.')),
             font=self.fonts.regular,
             fill=self.colors.main,
